@@ -1,0 +1,306 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "mount_file_id": "1W-BJZh5FXSrZuJk8ii6Y8ey_YmM5xVPe",
+      "authorship_tag": "ABX9TyNsgPBqnlPppjjP8augJBrU",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/gulendamcinar/hu_bby_261/blob/main/web.%C3%B6m%C3%BCrce%C4%9Fi\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import requests\n",
+        "from bs4 import BeautifulSoup\n",
+        "from google.colab import files\n",
+        "\n",
+        "\n",
+        "def web_orumcegi(url, depth):\n",
+        "    visited_pages = []\n",
+        "    def crawl(current_url, current_depth):\n",
+        "        if current_depth > depth:\n",
+        "            return\n",
+        "        try:\n",
+        "            response = requests.get(current_url)\n",
+        "            soup = BeautifulSoup(response.text, 'html.parser')\n",
+        "\n",
+        "\n",
+        "            title = soup.title.string if soup.title else 'Başlıksız'\n",
+        "            visited_pages.append((current_url, title))\n",
+        "\n",
+        "\n",
+        "            links = soup.find_all('a', href=True)\n",
+        "            for link in links:\n",
+        "                href = link['href']\n",
+        "                if href.startswith('http') and href not in [page[0] for page in visited_pages]:\n",
+        "                    crawl(href, current_depth + 1)\n",
+        "        except Exception as e:\n",
+        "            print(f\"Sayfayı tararken hata oluştu: {e}\")\n",
+        "\n",
+        "    crawl(url, 1)\n",
+        "    return visited_pages\n",
+        "\n",
+        "\n",
+        "def kaydet_dosyaya(visited_pages, filename='tarama_sonuclari.txt'):\n",
+        "    with open(filename, 'w') as file:\n",
+        "        for depth, page in enumerate(visited_pages, start=1):\n",
+        "            url, title = page\n",
+        "            file.write(f\"Seviye {depth} - URL: {url}, Başlık: {title}\\n\")\n",
+        "    print(f\"Sonuçlar {filename} dosyasına kaydedildi.\")\n",
+        "\n",
+        "\n",
+        "baslangic_url = \"https://fenerium.com/?gad_source=1&gclid=Cj0KCQjwyL24BhCtARIsALo0fSDckI4kRljgnHNA6unKCjCa9AwlrM9AyZW9vfOM7bMUT5L0_94wdmIaArh3EALw_wcB\"\n",
+        "tarama_seviyesi = 3\n",
+        "\n",
+        "\n",
+        "print(f\"Tarama başlatılıyor... URL: {baslangic_url}, Derinlik: {tarama_seviyesi}\")\n",
+        "visited_pages = web_orumcegi(baslangic_url, tarama_seviyesi)\n",
+        "\n",
+        "\n",
+        "kaydet_dosyaya(visited_pages)\n",
+        "\n",
+        "files.download('tarama_sonuclari.txt')\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 72
+        },
+        "id": "zDndAaClFULt",
+        "outputId": "64719e04-88cd-4893-eebc-bbd565996463"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Tarama başlatılıyor... URL: https://fenerium.com/?gad_source=1&gclid=Cj0KCQjwyL24BhCtARIsALo0fSDckI4kRljgnHNA6unKCjCa9AwlrM9AyZW9vfOM7bMUT5L0_94wdmIaArh3EALw_wcB, Derinlik: 3\n",
+            "Sonuçlar tarama_sonuclari.txt dosyasına kaydedildi.\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "\n",
+              "    async function download(id, filename, size) {\n",
+              "      if (!google.colab.kernel.accessAllowed) {\n",
+              "        return;\n",
+              "      }\n",
+              "      const div = document.createElement('div');\n",
+              "      const label = document.createElement('label');\n",
+              "      label.textContent = `Downloading \"${filename}\": `;\n",
+              "      div.appendChild(label);\n",
+              "      const progress = document.createElement('progress');\n",
+              "      progress.max = size;\n",
+              "      div.appendChild(progress);\n",
+              "      document.body.appendChild(div);\n",
+              "\n",
+              "      const buffers = [];\n",
+              "      let downloaded = 0;\n",
+              "\n",
+              "      const channel = await google.colab.kernel.comms.open(id);\n",
+              "      // Send a message to notify the kernel that we're ready.\n",
+              "      channel.send({})\n",
+              "\n",
+              "      for await (const message of channel.messages) {\n",
+              "        // Send a message to notify the kernel that we're ready.\n",
+              "        channel.send({})\n",
+              "        if (message.buffers) {\n",
+              "          for (const buffer of message.buffers) {\n",
+              "            buffers.push(buffer);\n",
+              "            downloaded += buffer.byteLength;\n",
+              "            progress.value = downloaded;\n",
+              "          }\n",
+              "        }\n",
+              "      }\n",
+              "      const blob = new Blob(buffers, {type: 'application/binary'});\n",
+              "      const a = document.createElement('a');\n",
+              "      a.href = window.URL.createObjectURL(blob);\n",
+              "      a.download = filename;\n",
+              "      div.appendChild(a);\n",
+              "      a.click();\n",
+              "      div.remove();\n",
+              "    }\n",
+              "  "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "download(\"download_6bbcde2b-8444-44b3-b8fe-72cee0b779fb\", \"tarama_sonuclari.txt\", 165)"
+            ]
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import requests\n",
+        "from bs4 import BeautifulSoup\n",
+        "from google.colab import files\n",
+        "\n",
+        "\n",
+        "# @param [\"https://fenerium.com/?gad_source=1&gclid=Cj0KCQjwyL24BhCtARIsALo0fSDckI4kRljgnHNA6unKCjCa9AwlrM9AyZW9vfOM7bMUT5L0_94wdmIaArh3EALw_wcB\"\n",
+        "# @param {type:\"slider\", min:1, max:5, step:1} tarama_seviyesi\n",
+        "\n",
+        "def web_orumcegi(url, depth):\n",
+        "    visited_pages = []\n",
+        "    def crawl(current_url, current_depth):\n",
+        "        if current_depth > depth:\n",
+        "            return\n",
+        "        try:\n",
+        "            response = requests.get(current_url)\n",
+        "            soup = BeautifulSoup(response.text, 'html.parser')\n",
+        "\n",
+        "\n",
+        "            title = soup.title.string if soup.title else 'Başlıksız'\n",
+        "            visited_pages.append((current_url, title))\n",
+        "\n",
+        "            links = soup.find_all('a', href=True)\n",
+        "            for link in links:\n",
+        "                href = link['href']\n",
+        "                if href.startswith('http') and href not in [page[0] for page in visited_pages]:\n",
+        "                    crawl(href, current_depth + 1)\n",
+        "        except Exception as e:\n",
+        "            print(f\"Sayfayı tararken hata oluştu: {e}\")\n",
+        "\n",
+        "    crawl(url, 1)\n",
+        "    return visited_pages\n",
+        "\n",
+        "\n",
+        "def kaydet_dosyaya(visited_pages, filename='tarama_sonuclari.txt'):\n",
+        "    with open(filename, 'w') as file:\n",
+        "        for depth, page in enumerate(visited_pages, start=1):\n",
+        "            url, title = page\n",
+        "            file.write(f\"Seviye {depth} - URL: {url}, Başlık: {title}\\n\")\n",
+        "    print(f\"Sonuçlar {filename} dosyasına kaydedildi.\")\n",
+        "\n",
+        "\n",
+        "print(f\"Tarama başlatılıyor... URL: {baslangic_url}, Derinlik: {tarama_seviyesi}\")\n",
+        "visited_pages = web_orumcegi(baslangic_url, tarama_seviyesi)\n",
+        "\n",
+        "\n",
+        "kaydet_dosyaya(visited_pages)\n",
+        "\n",
+        "\n",
+        "files.download('tarama_sonuclari.txt')\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 72
+        },
+        "id": "n1gGqqwtaUub",
+        "outputId": "e0eb5da8-bdca-4436-cf14-742e73500522"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Tarama başlatılıyor... URL: https://fenerium.com/?gad_source=1&gclid=Cj0KCQjwyL24BhCtARIsALo0fSDckI4kRljgnHNA6unKCjCa9AwlrM9AyZW9vfOM7bMUT5L0_94wdmIaArh3EALw_wcB, Derinlik: 3\n",
+            "Sonuçlar tarama_sonuclari.txt dosyasına kaydedildi.\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "\n",
+              "    async function download(id, filename, size) {\n",
+              "      if (!google.colab.kernel.accessAllowed) {\n",
+              "        return;\n",
+              "      }\n",
+              "      const div = document.createElement('div');\n",
+              "      const label = document.createElement('label');\n",
+              "      label.textContent = `Downloading \"${filename}\": `;\n",
+              "      div.appendChild(label);\n",
+              "      const progress = document.createElement('progress');\n",
+              "      progress.max = size;\n",
+              "      div.appendChild(progress);\n",
+              "      document.body.appendChild(div);\n",
+              "\n",
+              "      const buffers = [];\n",
+              "      let downloaded = 0;\n",
+              "\n",
+              "      const channel = await google.colab.kernel.comms.open(id);\n",
+              "      // Send a message to notify the kernel that we're ready.\n",
+              "      channel.send({})\n",
+              "\n",
+              "      for await (const message of channel.messages) {\n",
+              "        // Send a message to notify the kernel that we're ready.\n",
+              "        channel.send({})\n",
+              "        if (message.buffers) {\n",
+              "          for (const buffer of message.buffers) {\n",
+              "            buffers.push(buffer);\n",
+              "            downloaded += buffer.byteLength;\n",
+              "            progress.value = downloaded;\n",
+              "          }\n",
+              "        }\n",
+              "      }\n",
+              "      const blob = new Blob(buffers, {type: 'application/binary'});\n",
+              "      const a = document.createElement('a');\n",
+              "      a.href = window.URL.createObjectURL(blob);\n",
+              "      a.download = filename;\n",
+              "      div.appendChild(a);\n",
+              "      a.click();\n",
+              "      div.remove();\n",
+              "    }\n",
+              "  "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "download(\"download_c76725c5-f5cc-4a6d-aadb-5c0d67587cf0\", \"tarama_sonuclari.txt\", 165)"
+            ]
+          },
+          "metadata": {}
+        }
+      ]
+    }
+  ]
+}
